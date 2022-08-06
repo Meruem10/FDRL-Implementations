@@ -62,6 +62,7 @@ class Corridor(Environment):
 
 
 if __name__ == "__main__":
+    # Example
     np.random.seed(42)
     
     env = Corridor(10, random_init=True)
