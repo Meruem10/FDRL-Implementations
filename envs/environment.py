@@ -4,12 +4,12 @@ class Environment(ABC):
     """Abstract Environment class to define the API methods"""
     @abstractmethod
     def step(self, action):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def reset(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def render(self):
-        pass
+        raise NotImplementedError

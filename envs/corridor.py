@@ -1,5 +1,6 @@
 import pdb
 from random import random
+from typing import Tuple
 import numpy as np
 
 from environment import Environment
@@ -22,7 +23,7 @@ class Corridor(Environment):
         self.random_init = random_init
         self.seed = seed
 
-    def step(self, action):
+    def step(self, action: int) -> Tuple[int, int, bool]:
         if action > 0:
             self.state += 1
         elif action < 0:
@@ -34,7 +35,7 @@ class Corridor(Environment):
         reward = self.rewards[self.state]
         return self.state, reward, done
 
-    def reset(self):
+    def reset(self) -> int:
         if self.random_init:
             np.random.seed(self.seed)
             self.state = np.random.randint(1, self.num_tiles-1)
@@ -45,7 +46,7 @@ class Corridor(Environment):
         return self.state
         
 
-    def render(self):
+    def render(self) -> None:
         output = "xxxx"*(self.num_tiles) + "x\n"
         output += "x   "*(self.num_tiles) + "x\n"
         for k in range(self.num_tiles):
