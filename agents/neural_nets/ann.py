@@ -35,20 +35,6 @@ class ANN(nn.Module):
         self._define_layers()
 
     
-    def _define_layers(self):
-        # Hidden Layers (FC->Activation->Dropout->BatchNorm)
-        prev = self.num_inputs
-        for k, current in enumerate(self.hidden_layer_dims):
-            setattr(self, "fc_" + str(k+1), nn.Linear(prev, current, device=self.device, dtype=self.dtype))
-            setattr(self, "activation_" + str(k+1), eval("nn." + self.activation_fun + "(**self.activation_fun_kw_dict)"))
-            setattr(self, "dropout_" + str(k+1), nn.Dropout(self.dropout))
-            if self.use_batch_norm:
-                setattr(self, "bn_" + str(k+1), nn.BatchNorm1d(current, device=self.device, dtype=self.dtype))
-            prev = current
-
-        # Output Layer
-        self.out = nn.Linear(current, self.num_outputs, device=self.device, dtype=self.dtype)
-    
     def forward(self, x): 
         # Hidden Layers (FC->Activation->Dropout->BatchNorm)
         for k in range(len(self.hidden_layer_dims)):
@@ -63,10 +49,25 @@ class ANN(nn.Module):
 
         return x
 
+
+    def _define_layers(self) -> None:
+        # Hidden Layers (FC->Activation->Dropout->BatchNorm)
+        prev = self.num_inputs
+        for k, current in enumerate(self.hidden_layer_dims):
+            setattr(self, "fc_" + str(k+1), nn.Linear(prev, current, device=self.device, dtype=self.dtype))
+            setattr(self, "activation_" + str(k+1), eval("nn." + self.activation_fun + "(**self.activation_fun_kw_dict)"))
+            setattr(self, "dropout_" + str(k+1), nn.Dropout(self.dropout))
+            if self.use_batch_norm:
+                setattr(self, "bn_" + str(k+1), nn.BatchNorm1d(current, device=self.device, dtype=self.dtype))
+            prev = current
+
+        # Output Layer
+        self.out = nn.Linear(current, self.num_outputs, device=self.device, dtype=self.dtype)
+    
+
 if __name__ == "__main__":
     # Example
     torch.manual_seed(42)
-    np.random.seed(42)
 
     batch = 4
     num_inputs = 7
