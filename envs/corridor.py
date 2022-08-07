@@ -13,7 +13,8 @@ class Corridor(Environment):
     The state corresponding to the last index is a terminal state with reward 1.
     """
     def __init__(self, num_tiles: int, random_init: bool=False, seed: int=42) -> None:
-        assert num_tiles >= 3, "Cooridor must have at least 3 sections."
+        if num_tiles < 3:
+            raise ValueError("Cooridor must have at least 3 sections.")
         self.num_tiles = num_tiles
         self.states = [i for i in range(num_tiles)]
         self.terminal_states = [1 if i % (num_tiles-1) == 0 else 0 for i in range(num_tiles)] # First and last states are terminal
