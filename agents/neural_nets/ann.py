@@ -9,12 +9,8 @@ from typing import Dict
 class ANN(nn.Module):
     """
     Class for creating simple fully-connected networks
-
-    TO-DO:
-        -Bias initialization function
-        -(Optional) Additional L2-weight regularization
     """
-    def __init__(self, num_inputs: int, num_outputs: int, hidden_layer_dims: list[int], activation_fun: str="ReLU", activation_function_kw_dict: Dict={}, dropout: float=0., use_batch_norm: bool=False, weight_init: str="kaiming_uniform", weight_init_kw: Dict={"a": np.sqrt(5)}, dtype=torch.float32, seed: int=42) -> None:
+    def __init__(self, num_inputs: int, num_outputs: int, hidden_layer_dims: list[int], activation_fun: str="ReLU", activation_function_kw: Dict={}, dropout: float=0., use_batch_norm: bool=False, weight_init: str="kaiming_uniform", weight_init_kw: Dict={"a": np.sqrt(5)}, dtype=torch.float32, seed: int=42) -> None:
         super(ANN, self).__init__()
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
@@ -24,7 +20,7 @@ class ANN(nn.Module):
         self.weight_init_kw = weight_init_kw
         
         self.activation_fun = activation_fun
-        self.activation_fun_kw_dict = activation_function_kw_dict
+        self.activation_fun_kw = activation_function_kw
 
         self.dropout = dropout
         self.use_batch_norm = use_batch_norm
@@ -59,7 +55,7 @@ class ANN(nn.Module):
             setattr(self, "fc_" + str(k+1), nn.Linear(prev, current, device=self.device, dtype=self.dtype))
             self._init_weights(getattr(self, "fc_" + str(k+1)))
             
-            setattr(self, "activation_" + str(k+1), eval("nn." + self.activation_fun + "(**self.activation_fun_kw_dict)"))
+            setattr(self, "activation_" + str(k+1), eval("nn." + self.activation_fun + "(**self.activation_fun_kw)"))
             
             setattr(self, "dropout_" + str(k+1), nn.Dropout(self.dropout))
             
@@ -71,7 +67,7 @@ class ANN(nn.Module):
         # Output Layer
         self.out = nn.Linear(current, self.num_outputs, device=self.device, dtype=self.dtype)
     
-    def _init_weights(self, layer):
+    def _init_weights(self, layer) -> None:
         eval("nn.init." + self.weight_init + "_(layer.weight, **self.weight_init_kw)")
 
 if __name__ == "__main__":
@@ -85,8 +81,10 @@ if __name__ == "__main__":
 
     dropout = 0.1
     use_batch_norm = True
+    weight_init = "xavier_normal"
+    weight_init_kw = {"gain": 1.0}
 
-    net = ANN(num_inputs, num_outputs, hidden_layer_dims, dropout=dropout, use_batch_norm=use_batch_norm)
+    net = ANN(num_inputs, num_outputs, hidden_layer_dims, dropout=dropout, use_batch_norm=use_batch_norm, weight_init=weight_init, weight_init_kw=weight_init_kw)
     x = torch.randn((batch, num_inputs), device="cpu", dtype=torch.float32) # batch x dim
     y = net(x)
     assert y.size(0) == batch and y.size(1) == num_outputs
