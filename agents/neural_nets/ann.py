@@ -11,15 +11,17 @@ class ANN(nn.Module):
     Class for creating simple fully-connected networks
 
     TO-DO:
-        -Weight initialization function
         -Bias initialization function
         -(Optional) Additional L2-weight regularization
     """
-    def __init__(self, num_inputs: int, num_outputs: int, hidden_layer_dims: list[int], activation_fun: str="ReLU", activation_function_kw_dict: Dict={}, dropout: float=0., use_batch_norm: bool=False, dtype=torch.float32, seed: int=42) -> None:
+    def __init__(self, num_inputs: int, num_outputs: int, hidden_layer_dims: list[int], activation_fun: str="ReLU", activation_function_kw_dict: Dict={}, dropout: float=0., use_batch_norm: bool=False, weight_init: str="kaiming_uniform", weight_init_kw: Dict={"a": np.sqrt(5)}, dtype=torch.float32, seed: int=42) -> None:
         super(ANN, self).__init__()
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.hidden_layer_dims = hidden_layer_dims
+
+        self.weight_init = weight_init
+        self.weight_init_kw = weight_init_kw
         
         self.activation_fun = activation_fun
         self.activation_fun_kw_dict = activation_function_kw_dict
@@ -55,15 +57,22 @@ class ANN(nn.Module):
         prev = self.num_inputs
         for k, current in enumerate(self.hidden_layer_dims):
             setattr(self, "fc_" + str(k+1), nn.Linear(prev, current, device=self.device, dtype=self.dtype))
+            self._init_weights(getattr(self, "fc_" + str(k+1)))
+            
             setattr(self, "activation_" + str(k+1), eval("nn." + self.activation_fun + "(**self.activation_fun_kw_dict)"))
+            
             setattr(self, "dropout_" + str(k+1), nn.Dropout(self.dropout))
+            
             if self.use_batch_norm:
                 setattr(self, "bn_" + str(k+1), nn.BatchNorm1d(current, device=self.device, dtype=self.dtype))
+            
             prev = current
 
         # Output Layer
         self.out = nn.Linear(current, self.num_outputs, device=self.device, dtype=self.dtype)
     
+    def _init_weights(self, layer):
+        eval("nn.init." + self.weight_init + "_(layer.weight, **self.weight_init_kw)")
 
 if __name__ == "__main__":
     # Example
