@@ -11,6 +11,9 @@ class Corridor(Environment):
     
     The state corresponding to the first index is a terminal state with reward 0.
     The state corresponding to the last index is a terminal state with reward 1.
+
+    TO-DO:
+        -Implement unittests for the individual functions
     """
     def __init__(self, num_tiles: int, random_init: bool=False, seed: int=42) -> None:
         if num_tiles < 3:
