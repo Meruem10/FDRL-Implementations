@@ -9,6 +9,9 @@ from typing import Dict
 class ANN(nn.Module):
     """
     Class for creating simple fully-connected networks
+    
+    TO-DO:
+        -Implement unittests for the individual functions
     """
     def __init__(self, num_inputs: int, num_outputs: int, hidden_layer_dims: list[int], activation_fun: str="ReLU", activation_function_kw: Dict={}, dropout: float=0., use_batch_norm: bool=False, weight_init: str="kaiming_uniform", weight_init_kw: Dict={"a": np.sqrt(5)}, dtype=torch.float32, seed: int=42) -> None:
         super(ANN, self).__init__()
