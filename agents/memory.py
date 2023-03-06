@@ -18,10 +18,9 @@ class Memory(object):
         - Rename fields to non-plural
         - Add option not declare the actual fields needed to save, e.g. REINFORCE does not require to save (s, a, s')
     """
-    def __init__(self, algo_type: Literal["on-policy", "off-policy"], buffer_size: int=int(1e6), need_next_actions: bool=False, seed: int=42, custom_fields: Dict={}) -> None:
+    def __init__(self, algo_type: Literal["on-policy", "off-policy"], buffer_size: int=int(1e6), seed: int=42, custom_fields: Dict={}) -> None:
         self.algo_type = algo_type
         self.buffer_size = buffer_size
-        self.need_next_actions = need_next_actions
         self.custom_fields = custom_fields
         self.reset()
 
@@ -29,10 +28,10 @@ class Memory(object):
         self.rng = np.random.default_rng(seed)
 
 
-    def update(self, state=None, action=None, reward: float=None, next_state=None, done: bool=None, next_action=None, **kwargs) -> None:
+    def update(self, state=None, action=None, reward: float=None, next_state=None, done: bool=None, **kwargs) -> None:
         """ 
-        Adds a new experience (s, a, r, s', a') to the memory. Depending on algorithm type the 
-        behaviour is slightly different
+        Adds a new experience (s, a, r, s') to the memory. Depending on algorithm type the 
+        behaviour is slightly different. Additional quantities can be stored using **kwargs.
              on-policy: append sample to the current episode and start a new episode 
                         if it has terminated
             off-policy: insert sample to the last position and if the buffer is full, 
@@ -44,8 +43,6 @@ class Memory(object):
             self.rewards[self.pointer].append(reward)
             self.next_states[self.pointer].append(next_state)
             self.dones[self.pointer].append(done)
-            if self.need_next_actions:
-                self.next_actions[self.pointer].append(next_action)
             for field, data in kwargs.items():
                 if field in self.custom_fields:
                     getattr(self, field)[self.pointer].append(data)
@@ -56,8 +53,6 @@ class Memory(object):
                 self.rewards.append([])
                 self.next_states.append([])
                 self.dones.append([])
-                if self.need_next_actions:
-                    self.next_actions.append([])
                 for field, data in kwargs.items():
                     getattr(self, field).append([])
         else:
@@ -66,8 +61,6 @@ class Memory(object):
             self.rewards[self.pointer] = reward
             self.next_states[self.pointer] = next_state
             self.dones[self.pointer] = done
-            if self.need_next_actions:
-                self.next_actions[self.pointer] = next_action
             for field, data in kwargs.items():
                 if field in self.custom_fields:
                     getattr(self, field)[self.pointer] = data
@@ -93,8 +86,6 @@ class Memory(object):
         samples["rewards"] = list(itemgetter(*indices)(self.rewards))
         samples["next_states"] = list(itemgetter(*indices)(self.next_states))
         samples["dones"] = list(itemgetter(*indices)(self.dones))
-        if self.need_next_actions:
-            samples["next_actions"] = list(itemgetter(*indices)(self.next_actions))
         for field in self.custom_fields:
             samples[field] = list(itemgetter(*indices)(getattr(self, field)))
 
@@ -116,8 +107,6 @@ class Memory(object):
             self.rewards = [[]]
             self.next_states = [[]]
             self.dones = [[]]
-            if self.need_next_actions:
-                self.next_actions = [[]]
             for field in self.custom_fields.keys():
                 setattr(self, field, [[]])
         else:
@@ -127,8 +116,6 @@ class Memory(object):
             self.rewards = self.buffer_size*[None]
             self.next_states = self.buffer_size*[None]
             self.dones = self.buffer_size*[None]
-            if self.need_next_actions:
-                self.next_actions = self.buffer_size*[None]
             for field in self.custom_fields.keys():
                 setattr(self, field, self.buffer_size*[None])
 
@@ -139,7 +126,7 @@ if __name__ == "__main__":
     import copy
     torch.manual_seed(42)
 
-    custom_fields = {"log_probs": None, "entropy": None}
+    custom_fields = {"next_action": None, "log_probs": None, "entropy": None}
     mem_on_policy = Memory('on-policy', custom_fields=custom_fields)
     mem_off_policy = Memory('off-policy', custom_fields=custom_fields)
     for k in range(100):
