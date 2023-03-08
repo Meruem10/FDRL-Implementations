@@ -4,7 +4,7 @@ import torch.optim as optim
 
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Literal, Union, Tuple
+from typing import Literal, Union, Dict, Tuple
 
 from ann import ANN
 from memory import Memory
@@ -29,6 +29,7 @@ class SARSA(object):
         self.optimizer = optimizer
         self.memory = Memory('on-policy', custom_fields={"next_actions": None}) 
         self.gamma = gamma
+        self.target_strategy = target_strategy
         
         self.epsilon = epsilon
         self.n_actions = self.q_value_net.num_outputs
@@ -69,10 +70,52 @@ class SARSA(object):
         pass
 
     
-    def _calculate_targets(self) -> list[torch.tensor]:
+    def _calculate_targets(self) -> Dict[list[list]]:
         """ Calculates the targets using either: TD-Backup or Monte-Carlo """
-        pass
+        samples = self.memory.sample()
+        num_eps = self.memory.pointer
 
+        if self.target_strategy == "Monte-Carlo":
+            # discard last episode, if it has not finished yet (all previous episodes should have finished)
+            # cannot calculate an MC estimate of unfinished trajectories
+            if not samples["dones"][-1][-1]:
+                num_eps -= 1
+                for key in samples.keys():
+                    samples[key].pop()
+            
+            # check if there is at least one remaining episode
+            if not samples["dones"]:
+                raise NotImplementedError
+            
+            # calculate MC-targets using the actual received cumulative rewards 
+            # in the trajectory
+            samples["targets"] = []
+            for ep in range(num_eps):
+                rewards = samples["rewards"][ep]
+                targets = np.cumsum(rewards[::-1])
+
+                samples["targets"].append(targets)            
+        else:
+            """ TO-DO: Vectorize the calculation, i.e. instead of sequence processing, make simultaneously"""
+            # TD-Backup
+            samples["targets"] = []
+            for ep in range(num_eps):
+                len_eps = len(samples["rewards"][ep])
+
+                targets = len_eps*[None]
+                for i in range(len_eps):
+                    x_next = torch.from_numpy(samples["next_states"][ep][i].astype(self.np_dtype)).unsqueeze(0).to(self.device)
+                    a_next = samples["actions"][ep][i]
+                    with torch.no_grad():
+                        q_vals_next = self.q_value_net(x_next)
+                        q_val_next = q_vals_next[a_next]
+                    
+                    targets[i] = samples["rewards"][ep][i] + (1 - samples["dones"][ep][i])*self.gamma*q_val_next
+
+                samples["targets"].append(targets)            
+        
+        return samples
+    
     def _update_epsilon(self):
         """ Update the epsilon as training goes on (i.e. decreased)"""
         pass
