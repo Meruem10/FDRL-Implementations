@@ -72,6 +72,7 @@ class SARSA(object):
     
     def _calculate_targets(self) -> Dict[list[list]]:
         """ Calculates the targets using either: TD-Backup or Monte-Carlo """
+        """ TO-DO: Separate conversion to torch.tensor and target calculation"""
         samples = self.memory.sample()
         num_eps = self.memory.pointer
 
@@ -94,9 +95,30 @@ class SARSA(object):
                 rewards = samples["rewards"][ep]
                 targets = np.cumsum(rewards[::-1])
 
-                samples["targets"].append(targets)            
+                samples["targets"].append(targets)
+
+            # Flatten 
+            samples_flat = {}
+            for key in samples.keys():
+                samples_flat[key] = [torch.tensor(i, dtype=self.dtype, device=self.device) for ep in samples[key] for i in ep]           
         else:
-            """ TO-DO: Vectorize the calculation, i.e. instead of sequence processing, make simultaneously"""
+            # TD-Backup
+            # Flatten
+            samples_flat = {}
+            for key in samples.keys():
+                samples_flat[key] = [torch.tensor(i, dtype=self.dtype, device=self.device) for ep in samples[key] for i in ep]
+
+            # Stack next_states
+            x_next = torch.stack(samples_flat["next_states"])
+            a_next = torch.stack(samples_flat["next_actions"])
+            with torch.no_grad():
+                q_vals_next = self.q_value_net(x_next)
+                q_val_next = q_vals_next[range(q_vals_next.shape[0]), a_next]
+            
+            samples_flat["targets"] = samples_flat["rewards"] + (1 - samples_flat["dones"])*self.gamma*q_val_next
+            
+            """
+            # TO-DO: Vectorize the calculation, i.e. instead of sequence processing, make simultaneously
             # TD-Backup
             samples["targets"] = []
             for ep in range(num_eps):
@@ -112,9 +134,10 @@ class SARSA(object):
                     
                     targets[i] = samples["rewards"][ep][i] + (1 - samples["dones"][ep][i])*self.gamma*q_val_next
 
-                samples["targets"].append(targets)            
+                samples["targets"].append(targets) 
+            """           
         
-        return samples
+        return samples_flat
     
     def _update_epsilon(self):
         """ Update the epsilon as training goes on (i.e. decreased)"""
