@@ -35,38 +35,64 @@ class RubiksCube(Environment):
 
     def render(self) -> None:
         cube_render = np.zeros(
-            (3 * self.height, 4 * self.width + 1), dtype="S1"
+            (3 * self.height + 2, 4 * self.width + 4), dtype="S1"
         )
+
+        # EOF
         cube_render[:, -1] = "\n"
 
         # Build the render (matrix-indexed)
         # 1st block (rows)
         cube_render[: self.height, : self.width] = " "
+        cube_render[: self.height, self.width] = "|"
         cube_render[
-            : self.height, self.width : 2 * self.width
+            : self.height, self.width + 1 : 2 * self.width + 1
         ] = self._face_to_col("top")
-        cube_render[: self.height, 2 * self.width : -1] = " "
+        cube_render[: self.height, 2 * self.width + 1] = "|"
+        cube_render[: self.height, 2 * self.width + 2 : -1] = " "
+
+        # horizontal separator
+        cube_render[self.height, :-1] = "-"
 
         # 2nd block (rows)
         cube_render[
-            self.height : 2 * self.height, : self.width
+            self.height + 1 : 2 * self.height + 1, : self.width
         ] = self._face_to_col("left")
+        cube_render[self.height + 1 : 2 * self.height + 1, self.width] = "|"
+
         cube_render[
-            self.height : 2 * self.height, self.width : 2 * self.width
+            self.height + 1 : 2 * self.height + 1,
+            self.width + 1 : 2 * self.width + 1,
         ] = self._face_to_col("center")
         cube_render[
-            self.height : 2 * self.height, 2 * self.width : 3 * self.width
+            self.height + 1 : 2 * self.height + 1, 2 * self.width + 1
+        ] = "|"
+
+        cube_render[
+            self.height + 1 : 2 * self.height + 1,
+            2 * self.width + 2 : 3 * self.width + 2,
         ] = self._face_to_col("right")
         cube_render[
-            self.height : 2 * self.height, 3 * self.width : -1
+            self.height + 1 : 2 * self.height + 1, 3 * self.width + 2
+        ] = "|"
+
+        cube_render[
+            self.height + 1 : 2 * self.height + 1, 3 * self.width + 3 : -1
         ] = self._face_to_col("rightright")
 
+        # horizontal separator
+        cube_render[2 * self.height + 1, :-1] = "-"
+
         # 3rd block (rows)
-        cube_render[2 * self.height :, : self.width] = " "
+        cube_render[2 * self.height + 2 :, : self.width] = " "
+        cube_render[2 * self.height + 2 :, self.width] = "|"
+
         cube_render[
-            2 * self.height :, self.width : 2 * self.width
+            2 * self.height + 2 :, self.width + 1 : 2 * self.width + 1
         ] = self._face_to_col("bottom")
-        cube_render[2 * self.height :, 2 * self.width : -1] = " "
+        cube_render[2 * self.height + 2 :, 2 * self.width + 1] = "|"
+
+        cube_render[2 * self.height + 2 :, 2 * self.width + 2 : -1] = " "
 
         # render
         cube_render = [b.decode("UTF-8") for row in cube_render for b in row]
@@ -95,6 +121,6 @@ class RubiksCube(Environment):
 
 
 if __name__ == "__main__":
-    rubics_cube = RubiksCube()
+    rubics_cube = RubiksCube((4, 4))
 
     print("All tests have passed successfully!")
