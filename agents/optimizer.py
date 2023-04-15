@@ -1,5 +1,6 @@
-import torch
 from typing import Dict
+
+import torch
 
 
 class Optimizer(object):

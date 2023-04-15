@@ -1,8 +1,8 @@
-import torch
-import torch.nn as nn
+from typing import Dict
 
 import numpy as np
-from typing import Dict
+import torch
+import torch.nn as nn
 
 
 class ANN(nn.Module):

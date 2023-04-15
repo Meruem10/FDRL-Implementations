@@ -1,6 +1,7 @@
-import numpy as np
-from typing import Literal, Tuple, Dict
 from operator import itemgetter
+from typing import Dict, Literal, Tuple
+
+import numpy as np
 
 # # Debugger Tutorial: https://www.youtube.com/watch?v=R3smFr6W8jI
 # import debugpy
@@ -136,8 +137,9 @@ class Memory(object):
 
 if __name__ == "__main__":
     # exmaple
-    import torch
     import copy
+
+    import torch
 
     torch.manual_seed(42)
 

@@ -1,13 +1,12 @@
+from typing import Literal, Tuple, Union
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.optim as optim
-from torch.distributions import Normal, Categorical
-
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import Literal, Union, Tuple
-
 from ann import ANN
 from memory import Memory
+from torch.distributions import Categorical, Normal
 
 # # Debugger Tutorial: https://www.youtube.com/watch?v=R3smFr6W8jI
 # import debugpy
